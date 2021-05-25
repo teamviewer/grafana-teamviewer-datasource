@@ -1,0 +1,116 @@
+# vim ft=yaml
+# GitHub Actions configuration file
+---
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*" # Run workflow on version tags, e.g. v1.0.0.
+
+jobs:
+  release:
+    name: Build on CentOS 8
+    runs-on: ubuntu-20.04
+    container: 'centos:8'
+    strategy:
+      fail-fast: false
+    env:
+      GO_VERSION: "1.16.5"
+      NODE_VERSION: "14"
+      REPO_NAME: "github.com/teamviewer"
+    steps:
+    - name: Install dependencies
+      run: |
+        ## RPM installation
+        rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
+        dnf -y install dnf-plugins-core
+        dnf config-manager --set-enabled powertools
+        dnf -y install curl epel-release jq gcc gcc-c++ git gzip make zip
+        rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+        ## NodeJS installation
+        dnf -y module enable nodejs:$NODE_VERSION
+        dnf -y install nodejs
+        node --version
+        ## Yarn installation
+        curl https://dl.yarnpkg.com/rpm/yarn.repo --output /etc/yum.repos.d/yarn.repo
+        rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
+        dnf -y install yarn
+        yarn --version
+        ## Golang installation
+        cd ~ && curl -O https://dl.google.com/go/go$GO_VERSION.linux-amd64.tar.gz
+        tar -C /usr/local -xzf go$GO_VERSION.linux-amd64.tar.gz
+        echo "export GOPATH=$HOME/work" >> $HOME/.profile
+        echo "export GOBIN=$HOME/work/bin" >> $HOME/.profile
+        mkdir -p $HOME/work/bin
+        echo "export PATH=$PATH:/usr/local/go/bin:$HOME/work/bin" >> $HOME/.profile
+        source $HOME/.profile
+        go version
+        ## Mage installation
+        cd ~ && git clone https://github.com/magefile/mage
+        cd mage
+        go run bootstrap.go
+
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Build
+      shell: bash
+      run: |
+        source $HOME/.profile
+        make
+
+    - name: Sign
+      shell: bash
+      env:
+        GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }} # Requires a Grafana API key from Grafana.com.
+      run: |
+        source $HOME/.profile
+        make sign
+
+    - name: Get plugin metadata
+      id: metadata
+      run: |
+        export GRAFANA_PLUGIN_ID=$(cat dist/plugin.json | jq -r .id)
+        export GRAFANA_PLUGIN_VERSION=$(cat dist/plugin.json | jq -r .info.version)
+        export GRAFANA_PLUGIN_TYPE=$(cat dist/plugin.json | jq -r .type)
+        export GRAFANA_PLUGIN_ARTIFACT=${GRAFANA_PLUGIN_ID}-${GRAFANA_PLUGIN_VERSION}.zip
+        export GRAFANA_PLUGIN_ARTIFACT_CHECKSUM=${GRAFANA_PLUGIN_ARTIFACT}.md5
+        echo "::set-output name=plugin-id::${GRAFANA_PLUGIN_ID}"
+        echo "::set-output name=plugin-version::${GRAFANA_PLUGIN_VERSION}"
+        echo "::set-output name=plugin-type::${GRAFANA_PLUGIN_TYPE}"
+        echo "::set-output name=archive::${GRAFANA_PLUGIN_ARTIFACT}"
+        echo "::set-output name=archive-checksum::${GRAFANA_PLUGIN_ARTIFACT_CHECKSUM}"
+        echo ::set-output name=github-tag::${GITHUB_REF#refs/*/}
+
+    - name: Read changelog
+      id: changelog
+      run: |
+        awk '/^## / {s++} s == 1 {print}' CHANGELOG.md > release_notes.md
+        echo "::set-output name=path::release_notes.md"
+
+    - name: Package plugin
+      id: package-plugin
+      run: |
+        mv dist ${{ steps.metadata.outputs.plugin-id }}
+        zip ${{ steps.metadata.outputs.archive }} ${{ steps.metadata.outputs.plugin-id }} -r
+        md5sum ${{ steps.metadata.outputs.archive }} > ${{ steps.metadata.outputs.archive-checksum }}
+        echo "::set-output name=checksum::$(cat ./${{ steps.metadata.outputs.archive-checksum }} | cut -d' ' -f1)"
+
+    - name: Lint plugin
+      run: |
+        source $HOME/.profile
+        git clone https://github.com/grafana/plugin-validator
+        pushd ./plugin-validator/cmd/plugincheck
+        go install
+        popd
+        plugincheck ${{ steps.metadata.outputs.archive }}
+
+    - name: Upload
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "${{ steps.metadata.outputs.archive }},${{ steps.metadata.outputs.archive-checksum }}"
+        bodyFile: "release_notes.md"
+        draft: true
+        token: ${{ secrets.GITHUB_TOKEN }}

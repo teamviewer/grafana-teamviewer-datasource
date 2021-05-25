@@ -1,0 +1,64 @@
+# vim ft=yaml
+# GitHub Actions configuration file
+---
+name: Build
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    name: Build on CentOS 8
+    runs-on: ubuntu-20.04
+    container: 'centos:8'
+    strategy:
+      fail-fast: false
+    env:
+      GO_VERSION: "1.16.5"
+      NODE_VERSION: "14"
+      REPO_NAME: "github.com/teamviewer"
+    steps:
+    - name: Install dependencies
+      run: |
+        ## RPM installation
+        rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
+        dnf -y install dnf-plugins-core
+        dnf config-manager --set-enabled powertools
+        dnf -y install curl epel-release jq gcc gcc-c++ git gzip make zip
+        rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+        ## NodeJS installation
+        dnf -y module enable nodejs:$NODE_VERSION
+        dnf -y install nodejs
+        node --version
+        ## Yarn installation
+        curl https://dl.yarnpkg.com/rpm/yarn.repo --output /etc/yum.repos.d/yarn.repo
+        rpm --import https://dl.yarnpkg.com/rpm/pubkey.gpg
+        dnf -y install yarn
+        yarn --version
+        ## Golang installation
+        cd ~ && curl -O https://dl.google.com/go/go$GO_VERSION.linux-amd64.tar.gz
+        tar -C /usr/local -xzf go$GO_VERSION.linux-amd64.tar.gz
+        echo "export GOPATH=$HOME/work" >> $HOME/.profile
+        echo "export GOBIN=$HOME/work/bin" >> $HOME/.profile
+        mkdir -p $HOME/work/bin
+        echo "export PATH=$PATH:/usr/local/go/bin:$HOME/work/bin" >> $HOME/.profile
+        source $HOME/.profile
+        go version
+        ## Mage installation
+        cd ~ && git clone https://github.com/magefile/mage
+        cd mage
+        go run bootstrap.go
+
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Build
+      shell: bash
+      run: |
+        source $HOME/.profile
+        make

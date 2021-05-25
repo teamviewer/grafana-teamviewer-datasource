@@ -1,0 +1,52 @@
+{
+  "type": "datasource",
+  "name": "TeamViewer",
+  "id": "teamviewer-datasource",
+  "metrics": true,
+  "backend": true,
+  "annotations": true,
+  "executable": "teamviewer",
+  "info": {
+    "description": "Teamviewer Datasource for Grafana",
+    "author": {
+      "name": "TeamViewer Germany GmbH",
+      "url": "https://wwww.teamviewer.com"
+    },
+    "keywords": ["website", "monitoring", "teamviewer"],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      {
+        "name": "Website",
+        "url": "https://www.teamviewer.com"
+      },
+      {
+        "name": "GitHub",
+        "url": "https://github.com/teamviewer/grafana-teamviewer-datasource"
+      },
+      {
+        "name": "License",
+        "url": "https://github.com/teamviewer/grafana-teamviewer-datasource/blob/main/LICENSE"
+      },
+      {
+        "name": "API Documentation",
+        "url": "https://webapi.teamviewer.com/api/v1/docs/index"
+      }
+    ],
+    "screenshots": [
+      {"name": "Datasource Configuration", "path": "img/datasource.png"},
+      {"name": "Graph Google HTTP Response Time", "path": "img/google_http.png"},
+      {"name": "Graph Google ICMP Ping", "path": "img/google_icmp.png"},
+      {"name": "Metric Editor", "path": "img/query.png"}
+    ],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=7.3.0",
+    "grafanaVersion": "7.3",
+    "plugins": []
+  }
+}
