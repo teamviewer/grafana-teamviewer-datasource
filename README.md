@@ -5,7 +5,7 @@
 [![Changelog](https://img.shields.io/badge/change-log-blue.svg?style=flat)](https://github.com/teamviewer/grafana-teamviewer-datasource/blob/master/CHANGELOG.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://raw.githubusercontent.com/teamviewer/grafana-teamviewer-datasource/main/LICENSE)
 
-Visualize your [Teamviewer](https://www.teamviewer.com/) metrics with the leading open source software for time series analytics.
+Visualize your [Teamviewer Web Monitoring](https://www.teamviewer.com/en/remote-management/web-monitoring/) metrics with the leading open source software for time series analytics.
 
 ## Installation
 
