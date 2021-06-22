@@ -30,6 +30,8 @@ After all those steps restart the Grafana Server service, and you should see the
 
 Configure the Datasource with the API Bearer Token (without the word "Bearer"), and save the Datasource.
 
+This API Token can be found as "Script token", and generated at *Edit profile* > *Apps* > *Create script token*.
+
 ![](src/img/datasource.png)
 
 Now you can configure a panel on your dashboard as follows,
