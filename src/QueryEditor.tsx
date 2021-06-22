@@ -127,7 +127,7 @@ export class QueryEditor extends PureComponent<Props, Istate> {
         </div>
         <div className="gf-form max-width-30">
           <FormField
-            labelWidth={7}
+            labelWidth={8}
             value={this.props.query.queryMonitorDetails ? this.props.query.queryMonitorDetails.type : ''}
             label="Monitor Type"
             tooltip="Monitor Type configured {Icmp, Http, Https, PageLoad, Transaction}"
@@ -138,7 +138,7 @@ export class QueryEditor extends PureComponent<Props, Istate> {
         </div>
         <div className="gf-form max-width-30">
           <FormField
-            labelWidth={7}
+            labelWidth={8}
             value={this.props.query.queryMonitorDetails ? this.props.query.queryMonitorDetails.url : ''}
             label="Monitor URL"
             tooltip="Monitor URL configured"
