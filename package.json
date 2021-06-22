@@ -1,6 +1,6 @@
 {
   "name": "teamviewer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Teamviewer Datasource for Grafana",
   "scripts": {
     "build": "grafana-toolkit plugin:build",
