@@ -31,7 +31,8 @@ var (
 	_ instancemgmt.InstanceDisposer = (*WebMonitoringDatasource)(nil)
 )
 
-// NewSampleDatasource creates a new datasource instance.
+// NewWebMonitoringDatasource creates a new datasource instance.
+//nolint: gocritic
 func NewWebMonitoringDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	return &WebMonitoringDatasource{}, nil
 }
