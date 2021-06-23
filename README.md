@@ -12,7 +12,7 @@ Visualize your [Teamviewer Web Monitoring](https://www.teamviewer.com/en/remote-
 Install by using *grafana-cli*,
 
 ```bash
-grafana-cli plugins install teamviewer
+grafana-cli plugins install teamviewer-datasource
 ```
 
 Install manually
