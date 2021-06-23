@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -22,30 +21,20 @@ import (
 // webMonitingAPIBasePath base path, see https://webapi.teamviewer.com/api/v1/docs/index#/
 const webMonitingAPIBasePath = "https://webapi.teamviewer.com/api/v1"
 
-// newDatasource returns datasource.ServeOpts.
-func newDatasource() datasource.ServeOpts {
-	// creates a instance manager for your plugin. The function passed
-	// into `NewInstanceManger` is called when the instance is created
-	// for the first time or when a datasource configuration changed.
-	im := datasource.NewInstanceManager(newDataSourceInstance)
-	ds := &WebMonitoringDatasource{
-		im: im,
-	}
-
-	return datasource.ServeOpts{
-		QueryDataHandler:    ds,
-		CheckHealthHandler:  ds,
-		CallResourceHandler: ds,
-	}
-}
-
 // WebMonitoringDatasource is an example datasource used to scaffold
 // new datasource plugins with an backend.
-type WebMonitoringDatasource struct {
-	// The instance manager can help with lifecycle management
-	// of datasource instances in plugins. It's not a requirements
-	// but a best practice that we recommend that you follow.
-	im instancemgmt.InstanceManager
+type WebMonitoringDatasource struct{}
+
+var (
+	_ backend.QueryDataHandler      = (*WebMonitoringDatasource)(nil)
+	_ backend.CheckHealthHandler    = (*WebMonitoringDatasource)(nil)
+	_ instancemgmt.InstanceDisposer = (*WebMonitoringDatasource)(nil)
+)
+
+// NewWebMonitoringDatasource creates a new datasource instance.
+//nolint: gocritic
+func NewWebMonitoringDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return &WebMonitoringDatasource{}, nil
 }
 
 type monitor struct {
@@ -631,19 +620,11 @@ func (td *WebMonitoringDatasource) CheckHealth(ctx context.Context, req *backend
 	}, nil
 }
 
-type instanceSettings struct {
-	httpClient *http.Client
-}
-
-func newDataSourceInstance(setting backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	return &instanceSettings{
-		httpClient: &http.Client{},
-	}, nil
-}
-
-func (s *instanceSettings) Dispose() {
-	// Called before creatinga a new instance to allow plugin authors
-	// to cleanup.
+// Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
+// created. As soon as datasource settings change detected by SDK old datasource instance will
+// be disposed and a new one will be created using NewSampleDatasource factory function.
+func (td *WebMonitoringDatasource) Dispose() {
+	// Clean up datasource instance resources.
 }
 
 // checkAPIToken do a API call to /ping for checking if the token is valid.
